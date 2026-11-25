@@ -2,6 +2,8 @@
   "name": "fine-print-court",
   "private": true,
   "version": "1.0.0",
+  "description": "Paste any app's Terms of Service. Its worst clauses stand trial in a 3D courtroom and get a verdict in plain English.",
+  "homepage": "https://fine-print-court.vercel.app",
   "type": "module",
   "scripts": {
     "dev": "vite",
