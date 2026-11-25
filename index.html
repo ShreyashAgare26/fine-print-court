@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fine Print Court: your Terms of Service on trial</title>
+<meta name="description" content="Paste any app's Terms of Service or privacy policy. Its worst clauses stand trial in a 3D courtroom, and each gets a verdict in plain English.">
+<meta name="theme-color" content="#0b0b0b">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23fff'/%3E%3Crect x='8' y='14' width='48' height='9' fill='%230a0a0a'/%3E%3Crect x='8' y='28' width='30' height='9' fill='%23e6ff2e'/%3E%3Crect x='8' y='42' width='40' height='9' fill='%230a0a0a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fragment+Mono&family=Schibsted+Grotesk:wght@400..900&display=swap">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6"/><path d="M18.3 6.5a8 8 0 0 1 0 11"/></symbol>
+  <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></symbol>
+  <symbol id="i-skip" viewBox="0 0 24 24"><path d="M5 6l7 6-7 6zM13 6l7 6-7 6z"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+</svg>
+<canvas id="gl"></canvas>
+<div id="loading">loading the fine print…</div>
+<div class="bar" id="barTop"></div><div class="bar" id="barBot"></div>
+<div id="flash"></div>
+<div id="ko" class="hidden"><span>GUILTY</span></div>
+
+<!-- Intake: paste the terms -->
+<div id="intake" class="overlay hidden">
+  <form class="plate intake" id="intakeForm" novalidate>
+    <span class="mark">Fine Print Court</span>
+    <h1>Nobody reads the terms. So we put them on <span class="bar-word">trial</span>.</h1>
+    <p class="lead">Paste any app's Terms of Service or privacy policy. The worst clauses get charged, argue back, and get a verdict that says <b>what you're actually agreeing to</b>.</p>
+    <div class="examples" id="samples"><span class="lab">Or try</span></div>
+    <div class="two">
+      <label class="field"><span class="lab">App name (optional)</span><input class="input" id="company" placeholder="We'll guess from the text" maxlength="40" autocomplete="off"></label>
+      <label class="field"><span class="lab">The terms</span><textarea class="input" id="tos" placeholder="Paste the whole thing. Numbered clauses like 14.2 get called by name."></textarea></label>
+    </div>
+    <div class="row between"><p class="err" id="intakeErr" role="alert"></p><span class="note">Runs in your browser. Nothing is uploaded. Sound on: they talk. <span class="keys"><kbd>⌘/Ctrl</kbd> <kbd>Enter</kbd> starts.</span></span><button type="submit" class="btn primary">Start the trial<svg class="i"><use href="#i-arrow"/></svg></button></div>
+  </form>
+</div>
+
+<!-- Trial HUD -->
+<div id="hud" class="hidden">
+  <div id="pill" class="plate" aria-live="polite"><div class="copy"><span class="k" id="pillKicker"></span><span class="t" id="pillTitle"></span></div><div class="dots" id="pillDots"></div></div>
+  <div id="tools">
+    <button type="button" class="btn icon-btn" id="sound" aria-label="Mute sound" title="Sound"><svg class="i"><use href="#i-sound"/></svg></button>
+    <button type="button" class="btn icon-btn" id="exit" aria-label="Leave the trial and paste new terms" title="New case"><svg class="i"><use href="#i-close"/></svg></button>
+    <button type="button" class="btn small" id="skip"><svg class="i"><use href="#i-skip"/></svg><span class="wide-only">Skip to verdict</span><span class="narrow-only">Verdict</span></button>
+  </div>
+  <div id="bottom">
+    <div class="dialog-row">
+      <div id="dialog" aria-live="polite"></div>
+      <div class="next-col">
+        <button type="button" class="btn primary" id="next">Next <kbd>Space</kbd></button>
+        <label class="auto-toggle"><input type="checkbox" id="auto"> Auto-play</label>
+      </div>
+    </div>
+    <div id="sheet" class="hidden" aria-live="polite"></div>
+  </div>
+</div>
+
+<!-- Report card -->
+<aside id="verdict" class="plate hidden" aria-label="Verdict">
+  <div class="v-head"><h2 id="vHead" tabindex="-1">Verdict on <span id="vFor"></span></h2></div>
+  <div class="grade"><span id="vGrade"></span><p id="vSummary"></p></div>
+  <div class="sect"><h3 id="vListHead">Found guilty</h3><ul id="vList"></ul></div>
+  <p class="note">Matched against a list of known bad patterns, so unusual wording can slip through. Not legal advice.</p>
+  <div class="row actions"><button type="button" class="btn" id="copy">Copy verdict</button><button type="button" class="btn primary" id="again">New case</button></div>
+</aside>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>
