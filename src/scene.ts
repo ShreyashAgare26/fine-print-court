@@ -54,6 +54,19 @@ export function mesh<M extends THREE.Material | THREE.Material[]>(geo: THREE.Buf
   const o = new THREE.Mesh(geo, material); o.castShadow = shadow; o.receiveShadow = true; return o;
 }
 
+/** Frees the GPU memory (geometry, materials, textures) of objects leaving the scene for good. */
+export function disposeTree(root: THREE.Object3D): void {
+  root.traverse(o => {
+    const m = o as THREE.Mesh;
+    m.geometry?.dispose();
+    const mats = Array.isArray(m.material) ? m.material : m.material ? [m.material] : [];
+    for (const mat of mats) {
+      for (const v of Object.values(mat)) if (v instanceof THREE.Texture) v.dispose();
+      mat.dispose();
+    }
+  });
+}
+
 /* ---------- Canvas textures ---------- */
 export interface CanvasTex { c: HTMLCanvasElement; x: CanvasRenderingContext2D; t: THREE.CanvasTexture }
 export function canvasTex(w: number, h: number): CanvasTex {

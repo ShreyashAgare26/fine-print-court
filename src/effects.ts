@@ -32,7 +32,7 @@ export function shockwave(at: THREE.Vector3, color: string): void {
   const material = new THREE.MeshBasicMaterial({ color, transparent: true, side: THREE.DoubleSide, depthWrite: false });
   const ring = new THREE.Mesh(new THREE.RingGeometry(0.8, 1.05, 40), material);
   ring.rotation.x = -Math.PI / 2; ring.position.copy(at).setY(0.78); scene.add(ring);
-  void gtween(500, t => { ring.scale.setScalar(0.4 + easeOut(t) * 4.5); material.opacity = 1 - t; }).then(() => scene.remove(ring));
+  void gtween(500, t => { ring.scale.setScalar(0.4 + easeOut(t) * 4.5); material.opacity = 1 - t; }).then(() => { scene.remove(ring); ring.geometry.dispose(); material.dispose(); });
 }
 const STAR_TEX = (() => {
   const { x, t } = canvasTex(64, 64);

@@ -43,3 +43,21 @@ describe("forSpeech", () => {
     expect(forSpeech("Clause 14.2.1. Next sentence.")).toBe("Clause 14 point 2 point 1. Next sentence.");
   });
 });
+
+describe("review fixes", () => {
+  it("only treats a negation near the offence as a denial", () => {
+    const ids = prosecute("1.1 We share your information with advertisers and data brokers, and you cannot opt out of this.").charges.map(c => c.rule.id);
+    expect(ids).toContain("share");
+    expect(prosecute("1.1 We never sell your personal information to anyone, ever.").charges.map(c => c.rule.id)).not.toContain("sell");
+  });
+  it("skips defined terms when guessing the company", () => {
+    expect(prosecute('These Terms of Service ("Terms") are an agreement between you and Acme Corp ("Acme"). We may sell your personal data.').company).toBe("Acme");
+  });
+  it("catches capitalised AI wording", () => {
+    expect(prosecute("4.2 Training of our Artificial Intelligence systems may use your uploads.").charges.map(c => c.rule.id)).toContain("ai");
+  });
+  it("orders equal-severity charges by where they appear", () => {
+    const c = prosecute("We automatically scan messages you send. Our cookies track you across other websites and apps.").charges.filter(x => x.rule.severity === 3);
+    expect(c.map(x => x.rule.id)).toEqual(["scan", "tracking"]);
+  });
+});

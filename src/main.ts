@@ -11,6 +11,7 @@ import { initReport } from "./report";
 import { camera, frameView, renderer, scene } from "./scene";
 import { stepTweens, time } from "./time";
 import { loadNeural, onNeuralProgress } from "./tts";
+import { sfx } from "./audio";
 import { closeCourt, idleCast, initTrial, setIdleStage } from "./trial";
 import { $, sleep } from "./util";
 
@@ -43,5 +44,6 @@ void Promise.race([Promise.all(faces), sleep(3000)])
     onNeuralProgress(p => {
       status.textContent = p === "off" ? "" : p === "ready" ? "Natural voices ready." : `Loading natural voices… ${p}%`;
     });
-    setTimeout(() => void loadNeural(), 1200);
+    // Skipped while sound is off (no point downloading ~330 MB of voices nobody hears); unmuting starts it
+    setTimeout(() => { if (!sfx.muted) void loadNeural(); }, 1200);
   });

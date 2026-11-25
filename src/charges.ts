@@ -32,7 +32,7 @@ export const RULES: Rule[] = [
     plain: "They can record where your phone is and use or share it.",
     defence: "I only follow you around because I care." },
   { id: "ai", denyable: true, charge: "feeding your stuff to their AI", severity: 4,
-    tests: [/\b(train|training|improve|develop)\b[^.]{0,80}\b(artificial intelligence|machine learning|AI|models?)\b/],
+    tests: [/\b(train|training|improve|develop)\b[^.]{0,80}\b(artificial intelligence|machine learning|AI|models?)\b/i],
     plain: "Your posts, photos or messages can be used to train their AI.",
     defence: "Your selfies are helping the robots learn. You should be proud." },
   { id: "license", charge: "taking a forever license to your content", severity: 4,
@@ -121,6 +121,8 @@ export interface Charge {
   label: string;
   /** The offending sentence, trimmed to something a voice can read. */
   quote: string;
+  /** Position of the sentence in the document, for ordering ties. */
+  at: number;
 }
 export interface Case {
   company: string;
@@ -160,23 +162,40 @@ export function gradeOf(charges: Charge[]): Grade {
   return pts <= 2 ? "A" : pts <= 8 ? "B" : pts <= 16 ? "C" : pts <= 26 ? "D" : "E";
 }
 
+/**
+ * Does the sentence commit the offence? For rules a policy can deny, a negation counts only when it sits in the match
+ * or just before it: "we never sell your data" is a denial, but "we share it with advertisers and you cannot opt out" is not.
+ */
+function commits(rule: Rule, text: string): boolean {
+  return rule.tests.some(t => {
+    const m = t.exec(text);
+    if (!m) return false;
+    return !(rule.denyable && DENIAL.test(text.slice(Math.max(0, m.index - 25), m.index + m[0].length)));
+  });
+}
+
 /** Every rule that matches, once each, at its first matching sentence. Worst first; ties keep document order. */
 export function prosecute(text: string, company = ""): Case {
   const found: Charge[] = [];
   const sents = sentences(text);
   for (const rule of RULES) {
-    const hit = sents.find(s => rule.tests.some(t => t.test(s.text)) && !(rule.denyable && DENIAL.test(s.text)));
-    if (hit) found.push({ rule, label: hit.label, quote: trimQuote(hit.text.replace(LEAD_NUMBER, "")) });
+    const at = sents.findIndex(s => commits(rule, s.text));
+    if (at >= 0) found.push({ rule, label: sents[at].label, quote: trimQuote(sents[at].text.replace(LEAD_NUMBER, "")), at });
   }
-  const order = new Map(sents.map((s, i) => [s.label, i]));
-  found.sort((a, b) => b.rule.severity - a.rule.severity || (order.get(a.label) ?? 0) - (order.get(b.label) ?? 0));
+  found.sort((a, b) => b.rule.severity - a.rule.severity || a.at - b.at);
   return { company: company.trim() || guessCompany(text), charges: found, grade: gradeOf(found) };
 }
 
-/** "Glimmer Inc." from 'These terms ... between you and Glimmer Inc. ("Glimmer")'. Falls back to a generic name. */
+/** Words policies define in quotes that are not the company: ("Terms"), ("Services"), ("you")... */
+const DEFINED_TERMS = /^(terms|terms of service|agreement|services?|policy|privacy policy|site|website|app|application|platform|content|user|you|we|us|our|account|data)$/i;
+/**
+ * "Glimmer" from '... between you and Glimmer Labs Inc. ("Glimmer")'. A quoted short name is preferred when it isn't a
+ * defined term; otherwise the name after "between you and" / "welcome to". Falls back to a generic name.
+ */
 export function guessCompany(text: string): string {
-  const m = /\(\s*["“]([A-Z][\w&' -]{1,30})["”]/.exec(text) ?? /\b(?:welcome to|between you and)\s+([A-Z][\w&'-]*(?: [A-Z][\w&'-]*){0,2})/.exec(text);
-  return m ? m[1].trim() : "The App";
+  for (const m of text.matchAll(/\(\s*["“]([A-Z][\w&' -]{1,30})["”]/g)) if (!DEFINED_TERMS.test(m[1].trim())) return m[1].trim();
+  const m = /\b(?:welcome to|between you and)\s+([A-Z][\w&'-]*(?: [A-Z][\w&'-]*){0,2})/.exec(text);
+  return m ? m[1].trim().replace(/\s+(Inc|Ltd|LLC|Corp)$/, "") : "The App";
 }
 
 /** How many charges go on trial in the courtroom; the rest are listed in the report. */

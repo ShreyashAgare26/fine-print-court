@@ -10,7 +10,7 @@ import { addStars, confetti, debris, flashScreen, letterbox, shockwave } from ".
 import { hold, lookAll, say, setNext, setPill, setSoundIcon, showSheet, stamp } from "./hud";
 import { openIntake } from "./intake";
 import { showReport } from "./report";
-import { canvas, mat, mesh, smooth } from "./scene";
+import { canvas, disposeTree, mat, mesh, smooth } from "./scene";
 import { gtween, hitStop, slowMo, time, wait } from "./time";
 import { $, RM, ease, easeOut, store } from "./util";
 
@@ -49,15 +49,21 @@ function buildBench(): void {
 
 /** The Judge and Prosecutor idle at their posts behind the paste screen, so the room isn't empty. */
 export const idleCast: Fighter[] = [];
+/** Empties the stage and frees what was on it (each trial builds fresh characters). */
+function clearStage(): void {
+  for (const o of [...stage.children]) disposeTree(o);
+  stage.clear();
+}
 export function setIdleStage(): void {
-  stage.clear(); buildBench();
+  clearStage(); buildBench();
   idleCast.length = 0;
   idleCast.push(place(JUDGE, HOME[1]), place(PROSECUTOR, HOME[0]));
 }
 
 export async function startTrial(c: Case): Promise<void> {
   sfx.unlock(); voice.stop();
-  stage.clear(); idleCast.length = 0; buildBench();
+  clearStage(); idleCast.length = 0; buildBench();
+  skipWhenFree = exitWhenFree = false; // a press left over from the last trial must not act on this one
   const judge = place(JUDGE, HOME[1]), prosecutor = place(PROSECUTOR, HOME[0]);
   const t: Trial = { case: c, size: Math.min(TRIAL_SIZE, c.charges.length), judge, prosecutor, accused: null, cast: [judge, prosecutor], idx: 0 };
   app.trial = t; app.busy = true; time.rush = false;
@@ -89,7 +95,8 @@ async function bringIn(c: Charge): Promise<Fighter> {
   if (old) {
     const y0 = old.root.position.y;
     await gtween(500, k => { old.podium!.position.y = -k * 4; old.root.position.y = y0 - k * 4; });
-    stage.remove(old.root, old.podium!, old.spot!); t.cast = t.cast.filter(f => f !== old);
+    stage.remove(old.root, old.podium!, old.spot!); [old.root, old.podium!].forEach(disposeTree);
+    t.cast = t.cast.filter(f => f !== old);
   }
   const ch = place({ name: c.label, font: "Fragment Mono", cat: "Display", belly: "§", color: HI, slot: 2 + t.idx, hat: "none" }, HOME[2]);
   t.accused = ch; t.cast.push(ch);
@@ -146,6 +153,8 @@ async function nextCharge(): Promise<void> {
 }
 
 let autoTimer: ReturnType<typeof setTimeout> | undefined;
+// A scene that is mid-flight finishes (hurried) before we skip or leave, so two scripts never share the stage
+let skipWhenFree = false, exitWhenFree = false;
 function autoAdvance(): void {
   clearTimeout(autoTimer);
   autoTimer = setTimeout(() => { if (autoPlay() && !app.busy && app.screen === "trial") void nextCharge(); }, 1600);
@@ -218,12 +227,11 @@ async function finish(): Promise<void> {
 /** Back to the paste screen. */
 export function closeCourt(): void {
   voice.stop(); clearTimeout(autoTimer); app.trial = null; app.busy = false; time.rush = false;
+  skipWhenFree = exitWhenFree = false;
   setIdleStage(); camIdle(); setJumbo("Fine Print Court", "Order in the court", "paste the terms to begin");
 }
 
 export function initTrial(): void {
-  // A scene that is mid-flight finishes (hurried) before we skip or leave, so two scripts never share the stage
-  let skipWhenFree = false, exitWhenFree = false;
   const exit = () => { closeCourt(); openIntake(); };
   $("next").onclick = () => { void nextCharge(); };
   $("skip").onclick = () => { voice.stop(); if (app.busy) { time.rush = true; skipWhenFree = true; } else void finish(); };
@@ -239,7 +247,8 @@ export function initTrial(): void {
   auto.onchange = () => { store.set("auto", auto.checked); if (autoPlay() && !app.busy) autoAdvance(); };
   $("sound").onclick = () => { sfx.toggle(); voice.stop(); setSoundIcon(); };
   addEventListener("keydown", e => {
-    const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName ?? "");
-    if ((e.code === "Space" || e.key === "Enter") && app.screen === "trial" && !typing) { e.preventDefault(); void nextCharge(); }
+    // Fields and buttons keep their own Space/Enter (so Skip, Exit and Sound work from the keyboard)
+    const own = ["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(document.activeElement?.tagName ?? "");
+    if ((e.code === "Space" || e.key === "Enter") && app.screen === "trial" && !own) { e.preventDefault(); void nextCharge(); }
   });
 }
