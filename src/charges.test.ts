@@ -35,3 +35,11 @@ describe("prosecute", () => {
     expect(q.endsWith("…")).toBe(true);
   });
 });
+
+describe("forSpeech", () => {
+  it("reads clause numbers as one number, not two", async () => {
+    const { forSpeech } = await import("./tts");
+    expect(forSpeech("Clause 3.2, you are accused")).toBe("Clause 3 point 2, you are accused");
+    expect(forSpeech("Clause 14.2.1. Next sentence.")).toBe("Clause 14 point 2 point 1. Next sentence.");
+  });
+});

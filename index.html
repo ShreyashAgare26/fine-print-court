@@ -36,7 +36,7 @@
       <label class="field"><span class="lab">App name (optional)</span><input class="input" id="company" placeholder="We'll guess from the text" maxlength="40" autocomplete="off"></label>
       <label class="field"><span class="lab">The terms</span><textarea class="input" id="tos" placeholder="Paste the whole thing. Numbered clauses like 14.2 get called by name."></textarea></label>
     </div>
-    <div class="row between"><p class="err" id="intakeErr" role="alert"></p><span class="note">Runs in your browser. Nothing is uploaded. Sound on: they talk. <span class="keys"><kbd>⌘/Ctrl</kbd> <kbd>Enter</kbd> starts.</span></span><button type="submit" class="btn primary">Start the trial<svg class="i"><use href="#i-arrow"/></svg></button></div>
+    <div class="row between"><p class="err" id="intakeErr" role="alert"></p><span class="note">Runs in your browser. Nothing is uploaded. Sound on: they talk. <span id="voiceStatus" aria-live="polite"></span> <span class="keys"><kbd>⌘/Ctrl</kbd> <kbd>Enter</kbd> starts.</span></span><button type="submit" class="btn primary">Start the trial<svg class="i"><use href="#i-arrow"/></svg></button></div>
   </form>
 </div>
 

@@ -1,5 +1,6 @@
-// Sound effects (synthesised, no files) and voices (the browser's built-in speech engine: free, no key, works offline).
+// Sound effects (synthesised, no files) and voices: natural Kokoro voices when they have loaded, the browser's built-in speech until then.
 import type { Kind } from "./util";
+import { forSpeech, neural, speakNeural, stopNeural } from "./tts";
 import { store } from "./util";
 
 type AudioCtor = typeof AudioContext;
@@ -75,13 +76,33 @@ const STYLE: Record<Kind, { pitch: number; rate: number }> = {
 };
 const NARRATOR = { pitch: 1, rate: 1.1 };
 
+// The cast in Kokoro voices: Judge (Serif) British and measured, Prosecutor (Sans) brisk, the accused clause (Display)
+// cheeky; a different voice per slot so successive clauses don't all sound alike. The court narrator is British.
+const KOKORO: Record<Kind, string[]> = {
+  Serif: ["bm_george", "bm_lewis"], Sans: ["af_bella", "af_sarah"], Display: ["am_puck", "am_fenrir", "am_eric", "am_liam"],
+  Mono: ["am_michael"], Hand: ["af_nicole"],
+};
+const KOKORO_NARRATOR = "bf_emma";
+
 export const voice = {
-  get on(): boolean { return !!synth && voices.length > 0 && !muted; },
-  stop(): void { synth?.cancel(); },
-  /** Speaks a line in the speaker's voice (or the announcer's). Resolves when it has been spoken, or at once when voices are off. */
-  speak(speaker: Speaker | null, text: string): Promise<void> {
+  get on(): boolean { return !muted && (neural.ready || (!!synth && voices.length > 0)); },
+  stop(): void { stopNeural(); synth?.cancel(); },
+  /** Speaks a line in the speaker's voice (or the narrator's). Resolves when it has been spoken, or at once when voices are off. */
+  async speak(speaker: Speaker | null, line: string): Promise<void> {
+    if (!this.on) return;
+    const text = forSpeech(line);
+    if (neural.ready) {
+      synth?.cancel();
+      const list = speaker ? KOKORO[speaker.cat] : [KOKORO_NARRATOR], style = speaker ? STYLE[speaker.cat] : NARRATOR;
+      let how: Awaited<ReturnType<typeof speakNeural>> = "fallback";
+      try { how = await speakNeural(text, list[(speaker?.slot ?? 0) % list.length], style.rate, ctx()); } catch { /* fall through to the browser voice */ }
+      if (how !== "fallback") { if (speaker) speaker.talking = false; return; }
+    }
+    return this.speakBrowser(speaker, text);
+  },
+  speakBrowser(speaker: Speaker | null, text: string): Promise<void> {
     return new Promise(res => {
-      if (!synth || !this.on) return res();
+      if (!synth || voices.length === 0) { if (speaker) speaker.talking = false; return res(); }
       synth.cancel();
       const u = new SpeechSynthesisUtterance(text), all = cast(), style = speaker ? STYLE[speaker.cat] : NARRATOR;
       const pick = all[(speaker ? speaker.slot + 1 : 0) % all.length];

@@ -10,6 +10,7 @@ import { initIntake, openIntake } from "./intake";
 import { initReport } from "./report";
 import { camera, frameView, renderer, scene } from "./scene";
 import { stepTweens, time } from "./time";
+import { loadNeural, onNeuralProgress } from "./tts";
 import { closeCourt, idleCast, initTrial, setIdleStage } from "./trial";
 import { $, sleep } from "./util";
 
@@ -37,4 +38,10 @@ void Promise.race([Promise.all(faces), sleep(3000)])
     $("loading").classList.add("hidden");
     openIntake();
     frame();
+    // Natural voices download in the background while the visitor reads the paste screen
+    const status = $("voiceStatus");
+    onNeuralProgress(p => {
+      status.textContent = p === "off" ? "" : p === "ready" ? "Natural voices ready." : `Loading natural voices… ${p}%`;
+    });
+    setTimeout(() => void loadNeural(), 1200);
   });
