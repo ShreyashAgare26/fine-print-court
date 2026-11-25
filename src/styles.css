@@ -28,7 +28,12 @@
   kbd { font-family: var(--mono); font-size: 11px; padding: 0 4px; border: 1px solid currentColor; opacity: .8; }
   .lab { font-size: 13px; font-weight: 600; color: var(--ink-2); }
   /* Product wordmark: a short black bar, top-right of the paper */
-  .mark { justify-self: start; background: var(--ink); color: var(--paper); font-size: 13px; font-weight: 800; letter-spacing: -.01em; padding: 10px 12px 9px; margin-bottom: 18px; }
+  .topbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+  .mark { background: var(--ink); color: var(--paper); font-size: 13px; font-weight: 800; letter-spacing: -.01em; padding: 10px 12px 9px; }
+  /* Link to the code: quiet, top-right of the sheet, away from the main action */
+  .gh { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 13px; font-weight: 600; color: var(--ink-2); text-decoration: none; padding: 2px 0; }
+  .gh:hover { color: var(--ink); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+  .gh svg.i { width: 16px; height: 16px; }
 
   .plate { position: relative; background: var(--paper); }
   @keyframes cut { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
@@ -188,11 +193,11 @@
     #sheet { grid-template-columns: 1fr 1.4fr; } #sheet blockquote { display: none; } #sheet > * { padding: 10px; } .sh-l .lbl { font-size: 20px; }
     #verdict { top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 66vh; padding: 20px 18px; }
     #verdict .actions { margin: 0 -18px -20px; padding: 12px 18px 16px; bottom: -20px; }
-    .mark { margin-bottom: 8px; }
+    .topbar { margin-bottom: 8px; }
     #vGrade { font-size: 92px; } #vSummary { font-size: 19px; } .v-head h2 { font-size: 30px; }
   }
   @media (max-height: 700px) and (min-width: 761px) { #sheet blockquote { max-height: 60px; } #dialog .line { font-size: 17px; } }
-  @media (max-height: 820px) and (min-width: 761px) { .intake { gap: 14px; } .intake h1 { font-size: 46px; } .mark { margin-bottom: 6px; } #tos { min-height: 96px; } .intake .two { gap: 12px; } }
+  @media (max-height: 820px) and (min-width: 761px) { .intake { gap: 14px; } .intake h1 { font-size: 46px; } .topbar { margin-bottom: 6px; } #tos { min-height: 96px; } .intake .two { gap: 12px; } }
   /* Touch screens have no keyboard: drop the shortcut hints */
   @media (hover: none) { kbd, .keys { display: none; } }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
